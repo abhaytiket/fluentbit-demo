@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: app-with-logs
+  labels:
+    app: myapp
+spec:
+  volumes:
+  - name: logs
+    emptyDir: {}
+  - name: config-volume
+    configMap:
+      name: fluentbit-config
+
+  containers:
+  - name: golang-logger
+    image: sychonet/golang-logger:latest
+    volumeMounts:
+    - name: logs
+      mountPath: /var/log/app
+
+  - name: log-processor
+    image: bfosberry/http-logger:latest
+
+  - name: fluent-bit
+    image: fluent/fluent-bit:latest
+    resources:
+      requests:
+        cpu: 5m
+        memory: 10Mi
+      limits:
+        cpu: 50m
+        memory: 60Mi
+    volumeMounts:
+    - name: logs
+      mountPath: /var/log/app
+    - name: config-volume
+      mountPath: /fluent-bit/etc
+  
